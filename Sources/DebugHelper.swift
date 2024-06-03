@@ -8,6 +8,12 @@ internal protocol DebugHelper {
         key: ServiceKey,
         availableRegistrations: [ServiceKey: ServiceEntryProtocol]
     )
+
+    func resolutionFailed<Service>(
+        serviceType: Service.Type,
+        key: ServiceKey,
+        availableRegistrations: [ServiceKey: AsyncServiceEntryProtocol]
+    )
 }
 
 internal final class LoggingDebugHelper: DebugHelper {
@@ -23,6 +29,23 @@ internal final class LoggingDebugHelper: DebugHelper {
         ]
         output += availableRegistrations
             .filter { $0.1 is ServiceEntry<Service> }
+            .map { "\t{ " + $0.1.describeWithKey($0.0) + " }" }
+
+        Container.log(output.joined(separator: "\n"))
+    }
+
+    func resolutionFailed<Service>(
+        serviceType: Service.Type,
+        key: ServiceKey,
+        availableRegistrations: [ServiceKey: AsyncServiceEntryProtocol]
+    ) {
+        var output = [
+            "Swinject: Resolution failed. Expected registration:",
+            "\t{ \(description(serviceType: serviceType, serviceKey: key)) }",
+            "Available registrations:",
+        ]
+        output += availableRegistrations
+            .filter { $0.1 is AsyncServiceEntry<Service> }
             .map { "\t{ " + $0.1.describeWithKey($0.0) + " }" }
 
         Container.log(output.joined(separator: "\n"))
