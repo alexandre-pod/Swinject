@@ -110,4 +110,23 @@ class ContainerTests_Arguments: XCTestCase {
         )
         XCTAssertEqual(animal?.name, "123456789")
     }
+    
+    func testContainerArgumentsWorksWithExistentials() throws {
+        container.register(Person.self) { (r, animal: Animal) in PetOwner(pet: animal) }
+        
+        let animal: Animal = Cat(name: "cat")
+        // In Swift 5 language mode, this test passes with the following line.
+        // But in Swift 6 this test no longer pass due to this Swift evolution proposal
+        // [SE-0352](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0352-implicit-open-existentials.md)
+        let person = container.resolve(Person.self, argument: animal)
+        
+        // In order to make this test pass, we need to opt out from explicit opening, like said in the proposal by using
+        // [as any P / as! any P](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0352-implicit-open-existentials.md#suppressing-explicit-opening-with-as-any-p--as-any-p)
+        // The test pass with this line in Swift 6
+        // let person = container.resolve(Person.self, argument: animal as Animal)
+
+        let petOwner = try XCTUnwrap(person as? PetOwner)
+        let cat = try XCTUnwrap(petOwner.pet as? Cat)
+        XCTAssertEqual(cat.name, "cat")
+    }
 }
