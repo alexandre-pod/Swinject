@@ -91,7 +91,7 @@ class ContainerTests_GraphCaching: XCTestCase {
     // MARK: Instance storage interaction
 
     func testContainerUsesCurrentGraphIdentifierWhenManipulatingInstances() {
-        let spy = StorageSpy()
+        nonisolated(unsafe) let spy = StorageSpy()
         let graph = GraphIdentifier()
         let scope = ObjectScope(storageFactory: { spy })
         container.register(Dog.self) { _ in Dog() }.inObjectScope(scope)

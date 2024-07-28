@@ -11,7 +11,7 @@ class SynchronizedResolverTests: XCTestCase {
     // MARK: Multiple threads
 
     func testSynchronizedResolverCanResolveCircularDependencies() {
-        let container = Container { container in
+        nonisolated(unsafe) let container = Container { container in
             container.register(ParentProtocol.self) { _ in Parent() }
                 .initCompleted { r, s in
                     let parent = s as! Parent
@@ -39,8 +39,8 @@ class SynchronizedResolverTests: XCTestCase {
                 container.register(Animal.self) { _ in Cat() }
                     .inObjectScope(scope)
             }
-            let parentResolver = parentContainer.synchronize()
-            let childResolver = Container(parent: parentContainer).synchronize()
+            nonisolated(unsafe) let parentResolver = parentContainer.synchronize()
+            nonisolated(unsafe) let childResolver = Container(parent: parentContainer).synchronize()
             // swiftlint:disable opening_brace
             onMultipleThreads(actions: [
                 { _ = parentResolver.resolve(Animal.self) as! Cat },
@@ -56,7 +56,7 @@ class SynchronizedResolverTests: XCTestCase {
 
     func testSynchronizedResolverUsesDistinctGraphIdentifier() {
         var graphs = Set<GraphIdentifier>()
-        let container = Container {
+        nonisolated(unsafe) let container = Container {
             $0.register(Dog.self) {
                 graphs.insert(($0 as! Container).currentObjectGraph!)
                 return Dog()
@@ -70,7 +70,7 @@ class SynchronizedResolverTests: XCTestCase {
     
     func testSynchronizedResolverSynchronousReadsWrites() {
         let iterationCount = 3_000
-        let container = Container().synchronize() as! Container
+        nonisolated(unsafe) let container = Container().synchronize() as! Container
         let registerExpectation = expectation(description: "register")
         let resolveExpectations = (0..<iterationCount).map { expectation(description: String(describing: $0)) }
         let resolutionLock = NSLock()
@@ -100,7 +100,7 @@ class SynchronizedResolverTests: XCTestCase {
 
     func testSynchronizedResolverCanMakeItWithoutDeadlock() {
         let container = Container()
-        let threadSafeResolver = container.synchronize()
+        nonisolated(unsafe) let threadSafeResolver = container.synchronize()
         container.register(ChildProtocol.self) { _ in Child() }
         container.register(ParentProtocol.self) { _ in
             Parent(child: threadSafeResolver.resolve(ChildProtocol.self)!)
@@ -127,7 +127,7 @@ class SynchronizedResolverTests: XCTestCase {
             return Dog()
         }
 
-        let synchronized = container.synchronize()
+        nonisolated(unsafe) let synchronized = container.synchronize()
 
         onMultipleThreads {
             let lazy = synchronized.resolve(Provider<Animal>.self)
@@ -144,7 +144,7 @@ class SynchronizedResolverTests: XCTestCase {
             return Dog()
         }
 
-        let synchronized = container.synchronize()
+        nonisolated(unsafe) let synchronized = container.synchronize()
 
         let queue = DispatchQueue(
             label: "SwinjectTests.SynchronizedContainerSpec.Queue", attributes: .concurrent
@@ -167,7 +167,7 @@ class SynchronizedResolverTests: XCTestCase {
         }
         .inObjectScope(.container)
 
-        let synchronized = container.synchronize()
+        nonisolated(unsafe) let synchronized = container.synchronize()
 
         // fast but roughly sufficient to trigger ARC-related crash
         for _ in 0..<200 {
@@ -248,11 +248,11 @@ private final class Counter: Sendable {
 
 private let totalThreads = 500 // 500 threads are enough to get fail unless the container is thread safe.
 
-private func onMultipleThreads(action: @escaping () -> Void) {
+private func onMultipleThreads(action: @escaping @Sendable () -> Void) {
     onMultipleThreads(actions: [action])
 }
 
-private func onMultipleThreads(actions: [() -> Void]) {
+private func onMultipleThreads(actions: [@Sendable () -> Void]) {
     waitUntil(timeout: .seconds(2)) { done in
         let queue = DispatchQueue(
             label: "SwinjectTests.SynchronizedContainerTests.Queue",
@@ -274,7 +274,7 @@ private func onMultipleThreads(actions: [() -> Void]) {
 
 private func waitUntil(
     timeout: DispatchTimeInterval,
-    action: @escaping (@escaping () -> Void) -> Void) {
+    action: @escaping @Sendable (@escaping @Sendable () -> Void) -> Void) {
 
     let group = DispatchGroup()
     group.enter()

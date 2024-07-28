@@ -15,7 +15,7 @@ class ContainerTests_CustomScope: XCTestCase {
     // MARK: Resolving from custom scope
 
     func testContainerCreatesNewInstanceStorageForEachService() {
-        var instances = 0
+        nonisolated(unsafe) var instances = 0
         let custom = ObjectScope(storageFactory: { instances += 1; return FakeStorage() })
 
         container.register(Int.self) { _ in 0 }.inObjectScope(custom)
@@ -27,7 +27,7 @@ class ContainerTests_CustomScope: XCTestCase {
     }
 
     func testContainerStoresInstanceToStorageDuringResolution() {
-        let storage = FakeStorage()
+        nonisolated(unsafe) let storage = FakeStorage()
         let custom = ObjectScope(storageFactory: { storage })
 
         container.register(Int.self) { _ in 42 }.inObjectScope(custom)
@@ -37,7 +37,7 @@ class ContainerTests_CustomScope: XCTestCase {
     }
 
     func testContainerReturnsStoredInstanceIfStorageIsNotEmpty() {
-        let storage = FakeStorage()
+        nonisolated(unsafe) let storage = FakeStorage()
         let custom = ObjectScope(storageFactory: { storage })
 
         container.register(Int.self) { _ in 0 }.inObjectScope(custom)
@@ -50,7 +50,7 @@ class ContainerTests_CustomScope: XCTestCase {
     // MARK: Resetting scope
 
     func testContainerRemovesInstanceFromServicesInGivenScope() {
-        let storage = FakeStorage()
+        nonisolated(unsafe) let storage = FakeStorage()
         let custom = ObjectScope(storageFactory: { storage })
 
         container.register(Int.self) { _ in 0 }.inObjectScope(custom)
@@ -61,7 +61,7 @@ class ContainerTests_CustomScope: XCTestCase {
     }
 
     func testContainerDoesNotRemoveInstancesFromOtherScopes() {
-        let storage = FakeStorage()
+        nonisolated(unsafe) let storage = FakeStorage()
         let custom1 = ObjectScope(storageFactory: { storage })
         let custom2 = ObjectScope(storageFactory: FakeStorage.init)
 
@@ -73,7 +73,7 @@ class ContainerTests_CustomScope: XCTestCase {
     }
 
     func testContainerRemovesInstanceFromServiceRegisteredInParentContainer() {
-        let storage = FakeStorage()
+        nonisolated(unsafe) let storage = FakeStorage()
         let custom = ObjectScope(storageFactory: { storage })
         let child = Container(parent: container)
 
