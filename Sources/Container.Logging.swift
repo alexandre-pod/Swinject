@@ -17,4 +17,5 @@ public extension Container {
     }
 }
 
-private var _loggingFunction: LoggingFunctionType? = { print($0) }
+// TODO: Make this property more safe to access. Either with documentation or with a lock.
+private nonisolated(unsafe) var _loggingFunction: LoggingFunctionType? = { print($0) }
