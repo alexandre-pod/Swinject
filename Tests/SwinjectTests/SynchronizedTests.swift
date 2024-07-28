@@ -220,14 +220,14 @@ class SynchronizedResolverTests: XCTestCase {
     }
 }
 
-private final class Counter {
+private final class Counter: Sendable {
     enum Status {
         case underMax, reachedMax
     }
 
-    private var max: Int
+    private let max: Int
     private let lock = DispatchQueue(label: "SwinjectTests.SynchronizedContainerSpec.Counter.Lock", attributes: [])
-    var count = 0
+    private nonisolated(unsafe) var count = 0
 
     init(max: Int) {
         self.max = max
